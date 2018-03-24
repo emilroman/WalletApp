@@ -38,7 +38,6 @@ namespace DbAccess
         // Because databases
         public static Task AccessDatabase()
         {
-            Console.WriteLine("Accessing the database...");
             return Task.Delay(300);
         }
     }

@@ -13,14 +13,14 @@ namespace Services.Types
         private readonly IAccountsService _accountsService;
         private readonly ITransactionsRepository _transactionsRepository;
         private readonly IMapper _mapper;
-        private readonly SemaphoreSlim _transactionLock;
+        private readonly SemaphoreSlim _transactionSemaphore;
 
         public TransactionService(IAccountsService accountsService, ITransactionsRepository transactionsRepository, IMapper mapper)
         {
             _accountsService = accountsService;
             _transactionsRepository = transactionsRepository;
             _mapper = mapper;
-            _transactionLock = new SemaphoreSlim(1, 1);
+            _transactionSemaphore = new SemaphoreSlim(1, 1);
         }
 
         public async Task ProcessTransaction(Transaction transaction)
@@ -36,7 +36,7 @@ namespace Services.Types
             }
             var toAccount = await _accountsService.GetAccount(transaction.ToAccountId);
 
-            await _transactionLock.WaitAsync();
+            await _transactionSemaphore.WaitAsync();
             try
             {
                 fromAccount = await _accountsService.GetAccount(transaction.FromAccountId);
@@ -61,7 +61,7 @@ namespace Services.Types
             }
             finally
             {
-                _transactionLock.Release();
+                _transactionSemaphore.Release();
             }
 
         }
