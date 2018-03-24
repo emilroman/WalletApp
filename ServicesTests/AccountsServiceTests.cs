@@ -71,19 +71,6 @@ namespace ServicesTests
             _mockAccountsRepository.Verify(r => r.GetAccountEntity(1), Times.Once);
         }
 
-        [TestMethod]
-        public async Task UpdateAccount_WhenCalled_AccountsRepositoryUpdateAccountIsCalledOnce()
-        {
-            // Arrange
-            var account = new Account() {Id = 1, Balance = 3};
-
-            // Act
-             await service.UpdateAccount(account);
-
-            // Assert
-            _mockAccountsRepository.Verify(r => r.UpdateAccount(It.IsAny<AccountEntity>()), Times.Once);
-        }
-
         private void SetupMockAccountsRepository()
         {
             _mockAccountsRepository.Setup(r => r.GetAccountEntities()).Returns(Task.FromResult(_testAccountEntities));

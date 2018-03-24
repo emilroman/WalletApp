@@ -25,10 +25,7 @@ namespace Services.Types
 
         public async Task ProcessTransaction(Transaction transaction)
         {
-            if (Math.Abs(transaction.Amount) < 0.001)
-            {
-                throw new Exception($"Ups! It looks like you want to transfer {transaction.Amount}. Could it be a typo?");
-            }
+            ValidateTransaction(transaction);
 
             Console.WriteLine("TransactionsService: Started processing transaction.");
             
@@ -42,6 +39,9 @@ namespace Services.Types
             await _transactionLock.WaitAsync();
             try
             {
+                fromAccount = await _accountsService.GetAccount(transaction.FromAccountId);
+                toAccount = await _accountsService.GetAccount(transaction.ToAccountId);
+
                 if (TrasactionIsPossible(fromAccount.Balance, transaction.Amount))
                 {
                     fromAccount.Balance -= transaction.Amount;
@@ -57,12 +57,26 @@ namespace Services.Types
             catch (Exception ex)
             {
                 Console.WriteLine($"Transaction failed ({ex.Message})");
+                throw;
             }
             finally
             {
                 _transactionLock.Release();
             }
 
+        }
+
+        private static void ValidateTransaction(Transaction transaction)
+        {
+            if (Math.Abs(transaction.Amount) < 0.001)
+            {
+                throw new Exception($"Ups! It looks like you want to transfer {transaction.Amount}. Could it be a typo?");
+            }
+
+            if (transaction.FromAccountId == transaction.ToAccountId)
+            {
+                throw new Exception("FromAccount and ToAccount are the same. Typo?");
+            }
         }
 
         private static bool TrasactionIsPossible(double accountBalance, double debitAmount)
