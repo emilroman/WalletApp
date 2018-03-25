@@ -42,17 +42,19 @@ namespace Services.Types
                 fromAccount = await _accountsService.GetAccount(transaction.FromAccountId);
                 toAccount = await _accountsService.GetAccount(transaction.ToAccountId);
 
-                if (TrasactionIsPossible(fromAccount.Balance, transaction.Amount))
+                if (!TrasactionIsPossible(fromAccount.Balance, transaction.Amount))
                 {
-                    fromAccount.Balance -= transaction.Amount;
-                    await _accountsService.UpdateAccount(fromAccount);
-
-                    toAccount.Balance += transaction.Amount;
-                    await _accountsService.UpdateAccount(toAccount);
-
-                    var transactionEntity = _mapper.Map<TransactionEntity>(transaction);
-                    await _transactionsRepository.AddTransaction(transactionEntity);
+                    throw new Exception("Not enough $ bro!");
                 }
+
+                fromAccount.Balance -= transaction.Amount;
+                await _accountsService.UpdateAccount(fromAccount);
+
+                toAccount.Balance += transaction.Amount;
+                await _accountsService.UpdateAccount(toAccount);
+
+                var transactionEntity = _mapper.Map<TransactionEntity>(transaction);
+                await _transactionsRepository.AddTransaction(transactionEntity);
             }
             catch (Exception ex)
             {
