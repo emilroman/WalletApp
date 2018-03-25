@@ -25,27 +25,23 @@ namespace Services.Types
 
         public async Task ProcessTransaction(Transaction transaction)
         {
-            ValidateTransaction(transaction);
+            ValidateTransactionAmount(transaction);
+            ValidateTransactionAccounts(transaction);
 
             Console.WriteLine("TransactionsService: Started processing transaction.");
-            
+
             var fromAccount = await _accountsService.GetAccount(transaction.FromAccountId);
-            if (!TrasactionIsPossible(fromAccount.Balance, transaction.Amount))
-            {
-                throw new Exception("Not enough $ bro!");
-            }
+            ValidateAccountHasEnoughMoney(fromAccount.Balance, transaction.Amount);
+
             var toAccount = await _accountsService.GetAccount(transaction.ToAccountId);
 
             await _transactionSemaphore.WaitAsync();
             try
             {
                 fromAccount = await _accountsService.GetAccount(transaction.FromAccountId);
-                toAccount = await _accountsService.GetAccount(transaction.ToAccountId);
+                ValidateAccountHasEnoughMoney(fromAccount.Balance, transaction.Amount);
 
-                if (!TrasactionIsPossible(fromAccount.Balance, transaction.Amount))
-                {
-                    throw new Exception("Not enough $ bro!");
-                }
+                toAccount = await _accountsService.GetAccount(transaction.ToAccountId);
 
                 fromAccount.Balance -= transaction.Amount;
                 await _accountsService.UpdateAccount(fromAccount);
@@ -68,22 +64,28 @@ namespace Services.Types
 
         }
 
-        private static void ValidateTransaction(Transaction transaction)
+        private static void ValidateTransactionAmount(Transaction transaction)
         {
             if (Math.Abs(transaction.Amount) < 0.001)
             {
                 throw new Exception($"Ups! It looks like you want to transfer {transaction.Amount}. Could it be a typo?");
             }
+        }
 
+        private static void ValidateTransactionAccounts(Transaction transaction)
+        {
             if (transaction.FromAccountId == transaction.ToAccountId)
             {
                 throw new Exception("FromAccount and ToAccount are the same. Typo?");
             }
         }
 
-        private static bool TrasactionIsPossible(double accountBalance, double debitAmount)
+        private static void ValidateAccountHasEnoughMoney(double accountBalance, double debitAmount)
         {
-            return accountBalance >= debitAmount;
+            if (accountBalance < debitAmount)
+            {
+                throw new Exception("Not enough $ bro!");
+            }
         }
     }
 }
