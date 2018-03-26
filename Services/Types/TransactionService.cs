@@ -55,6 +55,7 @@ namespace Services.Types
             catch (Exception ex)
             {
                 Console.WriteLine($"Transaction failed ({ex.Message})");
+                _transactionSemaphore.Release();
                 throw;
             }
             finally
